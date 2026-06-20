@@ -1,26 +1,4 @@
-# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-#
-# CRONOS — Maintainer Dead-Man's-Switch Registry
-#
-# A public registry where open-source maintainers register a heartbeat for
-# a specific repository. If a maintainer goes silent past their threshold,
-# anyone can trigger a check. GenLayer fetches the maintainer's GitHub
-# profile and repo commit activity, an LLM evaluates the evidence, and
-# validators reach consensus via gl.eq_principle.prompt_comparative.
-#
-# If the verdict is INACTIVE, the package status flips to "transferred"
-# and the pre-designated emergency maintainer is authorized — readable by
-# anyone via is_transfer_authorized(). CRONOS does not call npm/PyPI/GitHub
-# write APIs itself: GenVM's web access is read-only by design, and actual
-# registry mutation (an npm ownership transfer, for example) requires
-# authenticated credentials that must stay off-chain for key-custody
-# reasons. CRONOS is the trust-minimized SOURCE OF TRUTH that a properly
-# permissioned off-chain agent — a GitHub Action holding org-owner secrets,
-# for example — watches and acts on.
-#
-# Anti-spam check fee is paid in GEN and returned to the checker (plus a
-# small reward) if the flag is confirmed correct; forfeited to the
-# contract balance if the flag turns out to be a false alarm.
+# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" } 
 
 from genlayer import *
 from dataclasses import dataclass
@@ -97,7 +75,16 @@ class CronosRegistry(gl.Contract):
         threshold_days: u256,
         grace_period_days: u256,
     ) -> u256:
-        """Register a package under dead-man's-switch protection."""
+        """
+        Register a package under dead-man's-switch protection.
+
+        If this github_user already has a non-active entry (withdrawn or
+        transferred), that entry is overwritten in place rather than
+        appending a new one — _find_index() always returns the first match
+        by github_user, so a stale duplicate left in the array would
+        permanently shadow the new active registration and make it
+        unreachable through the public API.
+        """
         key = github_user.lower()
         assert len(key) > 0, "GitHub username required"
         assert len(repo_name) > 0, "Repo name required"
@@ -117,6 +104,28 @@ class CronosRegistry(gl.Contract):
             grace = DEFAULT_GRACE_DAYS
 
         ts = u256(int(gl.message.timestamp)) if hasattr(gl.message, "timestamp") else u256(0)
+
+        if existing_idx >= 0:
+            # Reuse the existing slot — re-registering after a withdrawal
+            # or a confirmed transfer resets it back to a fresh active state.
+            p = self.packages[existing_idx]
+            p.repo_owner = repo_owner
+            p.repo_name = repo_name
+            p.package_url = package_url
+            p.owner_wallet = sender
+            p.emergency_wallet = emergency_addr
+            p.emergency_github = emergency_github
+            p.threshold_days = threshold_days
+            p.grace_period_days = grace
+            p.last_ping = ts
+            p.registered_at = ts
+            p.status = "active"
+            p.flagged_at = u256(0)
+            p.flagged_by = Address("0x0000000000000000000000000000000000000000")
+            p.verdict_reason = ""
+            p.last_evidence = ""
+            p.check_fee_locked = u256(0)
+            return u256(existing_idx)
 
         pkg_id = self.package_count
         pkg = gl.storage.inmem_allocate(
