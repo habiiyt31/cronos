@@ -100,8 +100,8 @@ export function useRegistry(connectedAddress?: string | null) {
         functionName: 'get_package',
         args: [githubUser],
       })
-      setPkg(result as PackageData)
-      return result as PackageData
+      setPkg(result as unknown as PackageData)
+      return result as unknown as PackageData
     } catch (e: any) {
       setError(e?.message || 'Failed to load package')
       return null
@@ -119,7 +119,7 @@ export function useRegistry(connectedAddress?: string | null) {
         functionName: 'get_all_packages',
         args: [],
       })
-      setAllPackages(result as PackageSummary[])
+      setAllPackages(result as unknown as PackageSummary[])
     } catch (e: any) {
       setError(e?.message || 'Failed to load directory')
     } finally {
@@ -155,6 +155,7 @@ export function useRegistry(connectedAddress?: string | null) {
           params.thresholdDays,
           params.gracePeriodDays,
         ],
+        value: BigInt(0),
       })
       setTxHash(hash as string)
       return hash
@@ -176,6 +177,7 @@ export function useRegistry(connectedAddress?: string | null) {
         address: CONTRACT_ADDRESS,
         functionName: 'ping',
         args: [githubUser],
+        value: BigInt(0),
       })
       setTxHash(hash as string)
       return hash
@@ -219,6 +221,7 @@ export function useRegistry(connectedAddress?: string | null) {
         address: CONTRACT_ADDRESS,
         functionName: 'withdraw',
         args: [githubUser],
+        value: BigInt(0),
       })
       setTxHash(hash as string)
       return hash
@@ -242,6 +245,7 @@ export function useRegistry(connectedAddress?: string | null) {
         address: CONTRACT_ADDRESS,
         functionName: 'update_emergency_maintainer',
         args: [githubUser, newWallet, newGithub],
+        value: BigInt(0),
       })
       setTxHash(hash as string)
       return hash
@@ -263,6 +267,7 @@ export function useRegistry(connectedAddress?: string | null) {
         address: CONTRACT_ADDRESS,
         functionName: 'update_threshold',
         args: [githubUser, newThresholdDays],
+        value: BigInt(0),
       })
       setTxHash(hash as string)
       return hash
