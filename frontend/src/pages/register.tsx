@@ -9,7 +9,7 @@ import { useWallet, useRegistry } from '@/hooks/useRegistry'
 export default function RegisterPage() {
   const router = useRouter()
   const { address, connect, connecting } = useWallet()
-  const { txLoading, error, txHash, register } = useRegistry()
+  const { txLoading, error, txHash, register } = useRegistry(address)
   const [toastHash, setToastHash] = useState<string | null>(null)
   const [toastError, setToastError] = useState<string | null>(null)
   const [done, setDone] = useState<string | null>(null)
@@ -27,7 +27,7 @@ export default function RegisterPage() {
   if (!address) {
     return (
       <>
-        <Head><title>Register — CRONOS</title></Head>
+        <Head><title>CRONOS · Register</title></Head>
         <Navbar />
         <div style={{ maxWidth: 460, margin: '6rem auto', padding: '0 1.25rem', textAlign: 'center' }}>
           <div className="panel">
@@ -48,7 +48,7 @@ export default function RegisterPage() {
   if (done) {
     return (
       <>
-        <Head><title>Registered — CRONOS</title></Head>
+        <Head><title>CRONOS · Registered</title></Head>
         <Navbar />
         <div style={{ maxWidth: 460, margin: '6rem auto', padding: '0 1.25rem', textAlign: 'center' }}>
           <div className="panel">
@@ -71,7 +71,7 @@ export default function RegisterPage() {
 
   return (
     <>
-      <Head><title>Register — CRONOS</title></Head>
+      <Head><title>CRONOS · Register</title></Head>
       <Navbar />
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '2.5rem 1.25rem 4rem' }}>
         <h1 style={{ fontSize: '1.2rem', color: 'var(--bright)', marginBottom: '0.4rem' }}>Register a Package</h1>

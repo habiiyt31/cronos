@@ -5,14 +5,14 @@ import Navbar from '@/components/Navbar'
 import PackageCard from '@/components/PackageCard'
 import TxToast from '@/components/TxToast'
 import { useWallet, useRegistry } from '@/hooks/useRegistry'
-import { getClient, CONTRACT_ADDRESS, ACTIVE_NETWORK } from '@/lib/config'
+import { getReadClient, CONTRACT_ADDRESS, ACTIVE_NETWORK } from '@/lib/config'
 
 export default function DashboardPage() {
   const { address, connect, connecting } = useWallet()
   const {
     pkg, allPackages, loading, txLoading, error, txHash,
     fetchAllPackages, fetchPackage, ping, withdraw,
-  } = useRegistry()
+  } = useRegistry(address)
 
   const [githubUser, setGithubUser] = useState('')
   const [searched, setSearched] = useState(false)
@@ -40,7 +40,7 @@ export default function DashboardPage() {
     setSearched(true)
     const result = await fetchPackage(user.trim().toLowerCase())
     if (result?.found) {
-      const client = getClient(ACTIVE_NETWORK)
+      const client = getReadClient(ACTIVE_NETWORK)
       try {
         const days = await client.readContract({
           address: CONTRACT_ADDRESS,
@@ -76,7 +76,7 @@ export default function DashboardPage() {
   if (!address) {
     return (
       <>
-        <Head><title>Dashboard — CRONOS</title></Head>
+        <Head><title>CRONOS · Dashboard</title></Head>
         <Navbar />
         <div style={{ maxWidth: 460, margin: '6rem auto', padding: '0 1.25rem', textAlign: 'center' }}>
           <div className="panel">
@@ -96,7 +96,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Head><title>Dashboard — CRONOS</title></Head>
+      <Head><title>CRONOS · Dashboard</title></Head>
       <Navbar />
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '2.5rem 1.25rem 4rem' }}>
 

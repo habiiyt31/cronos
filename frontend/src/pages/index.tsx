@@ -9,7 +9,7 @@ export default function Home() {
 
   return (
     <>
-      <Head><title>CRONOS — Maintainer Dead-Man's-Switch Registry</title></Head>
+      <Head><title>CRONOS</title></Head>
       <Navbar />
 
       <main style={{ maxWidth: 1080, margin: '0 auto', padding: '0 1.25rem' }}>

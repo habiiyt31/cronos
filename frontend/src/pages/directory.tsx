@@ -4,14 +4,14 @@ import Navbar from '@/components/Navbar'
 import PackageCard from '@/components/PackageCard'
 import TxToast from '@/components/TxToast'
 import { useWallet, useRegistry } from '@/hooks/useRegistry'
-import { getClient, CONTRACT_ADDRESS, ACTIVE_NETWORK, STATUS_META } from '@/lib/config'
+import { getReadClient, CONTRACT_ADDRESS, ACTIVE_NETWORK, STATUS_META } from '@/lib/config'
 
 export default function DirectoryPage() {
   const { address } = useWallet()
   const {
     pkg, allPackages, loading, txLoading, error, txHash,
     fetchAllPackages, fetchPackage, checkActivity,
-  } = useRegistry()
+  } = useRegistry(address)
 
   const [selected, setSelected] = useState<string | null>(null)
   const [daysInactive, setDaysInactive] = useState(0)
@@ -27,7 +27,7 @@ export default function DirectoryPage() {
     setSelected(githubUser)
     const result = await fetchPackage(githubUser)
     if (result?.found) {
-      const client = getClient(ACTIVE_NETWORK)
+      const client = getReadClient(ACTIVE_NETWORK)
       try {
         const days = await client.readContract({
           address: CONTRACT_ADDRESS,
@@ -38,6 +38,10 @@ export default function DirectoryPage() {
       } catch {
         setDaysInactive(0)
       }
+      // Keep the list view in sync with whatever the detail panel just
+      // fetched fresh from the contract — avoids a stale badge in the
+      // list below if status changed since the last list fetch.
+      fetchAllPackages()
     }
   }
 
@@ -54,9 +58,14 @@ export default function DirectoryPage() {
   const filtered = allPackages.filter(p => filter === 'all' || p.status === filter)
   const isOwner = pkg?.owner_wallet.toLowerCase() === address?.toLowerCase()
 
+  function handleFilterChange(f: typeof filter) {
+    setFilter(f)
+    setSelected(null)
+  }
+
   return (
     <>
-      <Head><title>Directory — CRONOS</title></Head>
+      <Head><title>CRONOS · Directory</title></Head>
       <Navbar />
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '2.5rem 1.25rem 4rem' }}>
 
@@ -70,7 +79,7 @@ export default function DirectoryPage() {
           {(['all', 'active', 'flagged', 'transferred'] as const).map(f => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => handleFilterChange(f)}
               className="mono"
               style={{
                 fontSize: '0.74rem', padding: '0.35rem 0.75rem', borderRadius: 4,

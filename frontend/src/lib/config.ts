@@ -1,4 +1,5 @@
-import { createClient, simulator, testnet } from 'genlayer-js'
+import { createClient } from 'genlayer-js'
+import { studionet, testnetBradbury } from 'genlayer-js/chains'
 
 export const NETWORKS = {
   studionet: {
@@ -6,12 +7,14 @@ export const NETWORKS = {
     rpc: 'https://studio.genlayer.com/api',
     chainId: 61999,
     explorer: 'https://explorer-studio.genlayer.com',
+    connectName: 'studionet' as const,
   },
   bradbury: {
     name: 'Bradbury',
     rpc: 'https://rpc-bradbury.genlayer.com',
     chainId: 4221,
     explorer: 'https://explorer-bradbury.genlayer.com',
+    connectName: 'testnetBradbury' as const,
   },
 } as const
 
@@ -23,12 +26,52 @@ export const CONTRACT_ADDRESS =
 export const ACTIVE_NETWORK: NetworkKey =
   (process.env.NEXT_PUBLIC_NETWORK as NetworkKey) || 'studionet'
 
-export function getClient(network: NetworkKey = ACTIVE_NETWORK) {
-  if (network === 'studionet') {
-    return createClient({ network: simulator })
+function chainFor(network: NetworkKey) {
+  return network === 'studionet' ? studionet : testnetBradbury
+}
+
+/**
+ * Read-only client. No account, no provider — just talks to the GenLayer RPC.
+ * Safe to call on every page load, no wallet required.
+ */
+export function getReadClient(network: NetworkKey = ACTIVE_NETWORK) {
+  return createClient({ chain: chainFor(network) })
+}
+
+/**
+ * Write client, signed through the injected wallet (MetaMask).
+ *
+ * Two things are required for this to actually reach the network instead of
+ * failing with "No account set" or a silent RPC fetch error:
+ *  1. `account` — the connected wallet address, so the SDK knows who signs.
+ *  2. `provider` — the injected EIP-1193 provider (window.ethereum), so the
+ *     SDK can actually ask the wallet to sign rather than guessing a default
+ *     RPC transport.
+ *
+ * Before the first write, call `await client.connect(NETWORKS[network].connectName)`
+ * to make sure MetaMask is actually pointed at GenLayer's chain — otherwise
+ * a wallet sitting on a different chain can cause writes to fail with
+ * RPC-shaped errors that look unrelated to "wrong network."
+ */
+export function getWriteClient(network: NetworkKey, account: string) {
+  if (typeof window === 'undefined' || !window.ethereum) {
+    throw new Error('No wallet provider found. Install MetaMask or a compatible wallet.')
   }
-  const cfg = NETWORKS[network]
-  return createClient({ network: testnet, endpoint: cfg.rpc })
+  return createClient({
+    chain: chainFor(network),
+    account: account as `0x${string}`,
+    provider: window.ethereum,
+  })
+}
+
+export async function ensureWalletOnNetwork(client: ReturnType<typeof getWriteClient>, network: NetworkKey) {
+  try {
+    await client.connect(NETWORKS[network].connectName)
+  } catch {
+    // Some wallets/SDK versions may not support connect() the same way —
+    // fail open here and let the actual writeContract call surface a
+    // clearer chain-mismatch error if there is one.
+  }
 }
 
 export const CHECK_FEE = BigInt('50000000000000000')   // 0.05 GEN
@@ -59,3 +102,4 @@ export function daysAgoLabel(days: number): string {
   if (days === 1) return '1 day ago'
   return `${days} days ago`
 }
+

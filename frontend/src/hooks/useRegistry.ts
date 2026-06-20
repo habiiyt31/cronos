@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { getClient, CONTRACT_ADDRESS, ACTIVE_NETWORK, CHECK_FEE } from '@/lib/config'
+import { getReadClient, getWriteClient, ensureWalletOnNetwork, CONTRACT_ADDRESS, ACTIVE_NETWORK, CHECK_FEE } from '@/lib/config'
 
 export interface PackageData {
   found: boolean
@@ -68,7 +68,7 @@ export function useWallet() {
   return { address, connecting, error, connect, disconnect }
 }
 
-export function useRegistry() {
+export function useRegistry(connectedAddress?: string | null) {
   const [pkg, setPkg] = useState<PackageData | null>(null)
   const [allPackages, setAllPackages] = useState<PackageSummary[]>([])
   const [loading, setLoading] = useState(false)
@@ -76,13 +76,26 @@ export function useRegistry() {
   const [error, setError] = useState<string | null>(null)
   const [txHash, setTxHash] = useState<string | null>(null)
 
-  const client = getClient(ACTIVE_NETWORK)
+  // Read-only client — no account needed for views.
+  const readClient = getReadClient(ACTIVE_NETWORK)
+
+  // Write client — must carry the connected wallet address and the
+  // injected provider so genlayer-js knows to delegate signing to MetaMask,
+  // and must be switched onto GenLayer's chain before sending.
+  async function requireWriteClient() {
+    if (!connectedAddress) {
+      throw new Error('Connect your wallet before sending a transaction.')
+    }
+    const client = getWriteClient(ACTIVE_NETWORK, connectedAddress)
+    await ensureWalletOnNetwork(client, ACTIVE_NETWORK)
+    return client
+  }
 
   const fetchPackage = useCallback(async (githubUser: string) => {
     setLoading(true)
     setError(null)
     try {
-      const result = await client.readContract({
+      const result = await readClient.readContract({
         address: CONTRACT_ADDRESS,
         functionName: 'get_package',
         args: [githubUser],
@@ -101,7 +114,7 @@ export function useRegistry() {
     setLoading(true)
     setError(null)
     try {
-      const result = await client.readContract({
+      const result = await readClient.readContract({
         address: CONTRACT_ADDRESS,
         functionName: 'get_all_packages',
         args: [],
@@ -128,6 +141,7 @@ export function useRegistry() {
     setError(null)
     setTxHash(null)
     try {
+      const client = await requireWriteClient()
       const hash = await client.writeContract({
         address: CONTRACT_ADDRESS,
         functionName: 'register',
@@ -150,13 +164,14 @@ export function useRegistry() {
     } finally {
       setTxLoading(false)
     }
-  }, [])
+  }, [connectedAddress])
 
   const ping = useCallback(async (githubUser: string) => {
     setTxLoading(true)
     setError(null)
     setTxHash(null)
     try {
+      const client = await requireWriteClient()
       const hash = await client.writeContract({
         address: CONTRACT_ADDRESS,
         functionName: 'ping',
@@ -170,13 +185,14 @@ export function useRegistry() {
     } finally {
       setTxLoading(false)
     }
-  }, [])
+  }, [connectedAddress])
 
   const checkActivity = useCallback(async (githubUser: string) => {
     setTxLoading(true)
     setError(null)
     setTxHash(null)
     try {
+      const client = await requireWriteClient()
       const hash = await client.writeContract({
         address: CONTRACT_ADDRESS,
         functionName: 'check_activity',
@@ -191,13 +207,14 @@ export function useRegistry() {
     } finally {
       setTxLoading(false)
     }
-  }, [])
+  }, [connectedAddress])
 
   const withdraw = useCallback(async (githubUser: string) => {
     setTxLoading(true)
     setError(null)
     setTxHash(null)
     try {
+      const client = await requireWriteClient()
       const hash = await client.writeContract({
         address: CONTRACT_ADDRESS,
         functionName: 'withdraw',
@@ -211,7 +228,7 @@ export function useRegistry() {
     } finally {
       setTxLoading(false)
     }
-  }, [])
+  }, [connectedAddress])
 
   const updateEmergencyMaintainer = useCallback(async (
     githubUser: string, newWallet: string, newGithub: string
@@ -220,6 +237,7 @@ export function useRegistry() {
     setError(null)
     setTxHash(null)
     try {
+      const client = await requireWriteClient()
       const hash = await client.writeContract({
         address: CONTRACT_ADDRESS,
         functionName: 'update_emergency_maintainer',
@@ -233,13 +251,14 @@ export function useRegistry() {
     } finally {
       setTxLoading(false)
     }
-  }, [])
+  }, [connectedAddress])
 
   const updateThreshold = useCallback(async (githubUser: string, newThresholdDays: number) => {
     setTxLoading(true)
     setError(null)
     setTxHash(null)
     try {
+      const client = await requireWriteClient()
       const hash = await client.writeContract({
         address: CONTRACT_ADDRESS,
         functionName: 'update_threshold',
@@ -253,7 +272,7 @@ export function useRegistry() {
     } finally {
       setTxLoading(false)
     }
-  }, [])
+  }, [connectedAddress])
 
   return {
     pkg, allPackages, loading, txLoading, error, txHash,
@@ -264,7 +283,7 @@ export function useRegistry() {
 
 export function useRegistryStats() {
   const [count, setCount] = useState<number>(0)
-  const client = getClient(ACTIVE_NETWORK)
+  const client = getReadClient(ACTIVE_NETWORK)
 
   const refresh = useCallback(async () => {
     try {
