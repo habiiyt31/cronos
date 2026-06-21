@@ -61,7 +61,7 @@ export default function RegisterForm({ onSubmit, loading }: Props) {
         <input className="field-input" placeholder="torvalds" value={githubUser} onChange={e => setGithubUser(e.target.value)} />
       </Field>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
         <Field label="Repo Owner / Org" error={errors.repoOwner}>
           <input className="field-input" placeholder="torvalds" value={repoOwner} onChange={e => setRepoOwner(e.target.value)} />
         </Field>
@@ -86,7 +86,7 @@ export default function RegisterForm({ onSubmit, loading }: Props) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
         <Field label="Inactivity Threshold (days)" error={errors.thresholdDays} hint="Minimum 60 days.">
           <input className="field-input" type="number" min="60" value={thresholdDays} onChange={e => setThresholdDays(Number(e.target.value))} />
         </Field>

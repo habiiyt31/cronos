@@ -16,7 +16,7 @@ export default function Home() {
 
         {/* Hero */}
         <section style={{ paddingTop: '4.5rem', paddingBottom: '3rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '3rem', alignItems: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', alignItems: 'center' }}>
             <div>
               <span className="mono" style={{
                 fontSize: '0.74rem', color: 'var(--signal)', letterSpacing: '0.08em',
@@ -58,7 +58,7 @@ export default function Home() {
 
             {/* Hero panel: live status mock */}
             <div className="panel">
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
                 <span className="mono" style={{ fontSize: '0.85rem', color: 'var(--bright)', fontWeight: 600 }}>
                   left-pad/core
                 </span>

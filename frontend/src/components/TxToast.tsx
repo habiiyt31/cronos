@@ -26,7 +26,8 @@ export default function TxToast({ hash, error, onDismiss }: Props) {
 
   return (
     <div style={{
-      position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 100, maxWidth: 360,
+      position: 'fixed', bottom: '1.25rem', right: '1.25rem', left: '1.25rem', zIndex: 100,
+      maxWidth: 360, marginLeft: 'auto',
       background: 'var(--raised)', border: `1px solid ${error ? 'var(--critical)' : 'var(--signal)'}`,
       borderRadius: 6, padding: '1rem 1.25rem',
       opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(8px)',
